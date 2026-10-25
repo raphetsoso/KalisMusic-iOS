@@ -24,6 +24,9 @@ final class PlayerEngine: ObservableObject {
     var current: Track? { (index >= 0 && index < queue.count) ? queue[index] : nil }
 
     private let player = AVPlayer()
+    /// Titre en cours annoncé par la webradio (métadonnées ICY lues par le lecteur) ; sert aussi à l'enregistreur.
+    private(set) var liveTitle: String?
+    private let metaDelegate = LiveMetaDelegate()
     private var timeObserver: Any?
     private var rateObs: NSKeyValueObservation?
     private var itemObs: NSKeyValueObservation?
@@ -266,7 +269,7 @@ final class PlayerEngine: ObservableObject {
                 await MainActor.run {
                     guard token == self.loadToken else { return }
                     guard let u = r.url, let url = URL(string: Ncs.encodeUrl(u)) else {
-                        self.fail(r.error ?? "flux introuvable")
+                        self.fail(r.error ?? L("flux introuvable"))
                         return
                     }
                     self.begin(url: url)
@@ -275,7 +278,7 @@ final class PlayerEngine: ObservableObject {
         } else {
             let url = Paths.url(forSource: t.source)
             if !FileManager.default.fileExists(atPath: url.path) {
-                fail("Fichier introuvable")
+                fail(L("Fichier introuvable"))
                 return
             }
             begin(url: url)
@@ -284,6 +287,13 @@ final class PlayerEngine: ObservableObject {
 
     private func begin(url: URL) {
         let item = AVPlayerItem(url: url)
+        liveTitle = nil
+        if current?.stream == true {
+            metaDelegate.onTitle = { [weak self] t in self?.liveTitle = t }
+            let out = AVPlayerItemMetadataOutput(identifiers: nil)
+            out.setDelegate(metaDelegate, queue: DispatchQueue.main)
+            item.add(out)
+        }
         itemObs = item.observe(\.status, options: [.new]) { [weak self] it, _ in
             DispatchQueue.main.async { self?.itemStatusChanged(it) }
         }
@@ -310,7 +320,7 @@ final class PlayerEngine: ObservableObject {
             syncState()
             updateNowPlaying()
         case .failed:
-            fail(item.error?.localizedDescription ?? "lecture impossible")
+            fail(item.error?.localizedDescription ?? L("lecture impossible"))
         default:
             break
         }
@@ -319,7 +329,7 @@ final class PlayerEngine: ObservableObject {
     private func trackEnded() {
         guard let t = current else { return }
         if t.stream {                      // un flux qui se coupe n'est pas une fin de morceau
-            fail("flux interrompu")
+            fail(L("flux interrompu"))
             return
         }
         if index + 1 < queue.count {
@@ -344,9 +354,9 @@ final class PlayerEngine: ObservableObject {
             return
         }
         if current?.stream == true {
-            errorMessage = "Station indisponible. Vérifiez votre connexion ou l'adresse du flux."
+            errorMessage = L("Station indisponible. Vérifiez votre connexion ou l'adresse du flux.")
         } else {
-            errorMessage = "Lecture impossible : " + msg
+            errorMessage = L("Lecture impossible : ") + msg
         }
         wantPlay = false
         player.pause()
@@ -466,5 +476,26 @@ final class PlayerEngine: ObservableObject {
             plays[path] = v
         }
         UserDefaults.standard.set(plays, forKey: "kalis_plays")
+    }
+}
+
+
+/// Reçoit les titres des webradios (métadonnées ICY / timed metadata).
+final class LiveMetaDelegate: NSObject, AVPlayerItemMetadataOutputPushDelegate {
+    var onTitle: ((String) -> Void)?
+
+    func metadataOutput(_ output: AVPlayerItemMetadataOutput,
+                        didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup],
+                        from track: AVPlayerItemTrack?) {
+        for g in groups {
+            for item in g.items {
+                let key = (item.key as? String) ?? ""
+                let isTitle = key == "StreamTitle" || item.commonKey == .commonKeyTitle
+                if isTitle, let s = item.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
+                    onTitle?(s)
+                    return
+                }
+            }
+        }
     }
 }
