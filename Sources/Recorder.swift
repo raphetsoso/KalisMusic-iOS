@@ -196,6 +196,8 @@ final class StreamRecorder: ObservableObject {
         var failure: String? = nil
         var cut = false
         var singleSaved = false
+        var noTitles = false
+        var partialOnly = false
         var savers: [Task<Void, Never>] = []
         var cuts = 0
         var seg: Segment? = nil
@@ -203,7 +205,7 @@ final class StreamRecorder: ObservableObject {
         do {
             let r = await StreamResolver.resolve(station.source, name: station.title)
             guard let u = r.url, let url = URL(string: Ncs.encodeUrl(u)) else {
-                throw KError(r.error ?? "flux introuvable")
+                throw KError(r.error ?? L("flux introuvable"))
             }
             var req = URLRequest(url: url)
             req.setValue("KalisMusic/1.0", forHTTPHeaderField: "User-Agent")
@@ -214,12 +216,12 @@ final class StreamRecorder: ObservableObject {
             let http = resp as? HTTPURLResponse
             let type = (http?.value(forHTTPHeaderField: "Content-Type") ?? "").lowercased()
             if type.contains("mpegurl") || url.path.lowercased().hasSuffix(".m3u8") {
-                throw KError("Cette station diffuse par segments (HLS) et ne peut pas être enregistrée.")
+                throw KError(L("Cette station diffuse par segments (HLS) et ne peut pas être enregistrée."))
             }
             let metaint = Int(http?.value(forHTTPHeaderField: "icy-metaint") ?? "") ?? 0
             let ext = extFor(type)
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            guard let first = Segment(dir: dir, ext: ext, title: nil) else { throw KError("fichier temporaire impossible") }
+            guard let first = Segment(dir: dir, ext: ext, title: nil) else { throw KError(L("fichier temporaire impossible")) }
             seg = first
 
             var state = 0                 // 0 audio, 1 octet de longueur, 2 métadonnées
@@ -260,6 +262,10 @@ final class StreamRecorder: ObservableObject {
                 for try await b in bytes {
                     if metaint <= 0 {
                         seg?.append(b)
+                        // pas de métadonnées dans le flux : on suit le titre annoncé au lecteur
+                        if let sg = seg, sg.bytes % 8192 == 0, let live = PlayerEngine.shared.liveTitle {
+                            titleChanged(live)
+                        }
                     } else {
                         switch state {
                         case 0:
@@ -293,8 +299,13 @@ final class StreamRecorder: ObservableObject {
             if let s = seg {
                 s.close()
                 seg = nil
-                if cuts == 0 {
+                if cuts == 0, let t = current, s.bytes >= 20 * 1024 {
+                    // la station envoie ses titres mais le titre n'a pas changé : un seul morceau, incomplet
+                    await saveTrack(file: s.url, full: t, station: station)
+                    partialOnly = true
+                } else if cuts == 0 {
                     if s.bytes >= 20 * 1024 {
+                        noTitles = true
                         let df = DateFormatter()
                         df.dateFormat = "yyyy-MM-dd HH.mm"
                         let stamp = df.string(from: Date())
@@ -312,7 +323,7 @@ final class StreamRecorder: ObservableObject {
                         }
                     } else {
                         try? FileManager.default.removeItem(at: s.url)
-                        throw KError(cut ? "Connexion interrompue." : "Enregistrement trop court.")
+                        throw KError(cut ? L("Connexion interrompue.") : L("Enregistrement trop court."))
                     }
                 } else {
                     try? FileManager.default.removeItem(at: s.url)
@@ -331,15 +342,19 @@ final class StreamRecorder: ObservableObject {
             self.isRecording = false
             self.source = nil
             MusicLibrary.shared.refresh()
-            if count > 0 {
-                ToastCenter.shared.show("\(count) morceau\(count > 1 ? "x" : "") ajouté\(count > 1 ? "s" : "") à la bibliothèque")
+            if partialOnly {
+                ToastCenter.shared.show(L("Un seul morceau enregistré, incomplet : le titre n'a pas changé. Laissez tourner plus longtemps pour découper."))
+            } else if singleSaved && noTitles {
+                ToastCenter.shared.show(L("Cette station n'envoie pas les titres : enregistrement en un seul fichier."))
+            } else if count > 0 {
+                ToastCenter.shared.show(LF(count > 1 ? "%ld morceaux ajoutés à la bibliothèque" : "%ld morceau ajouté à la bibliothèque", count))
             } else if singleSaved {
-                ToastCenter.shared.show(cut ? "Connexion interrompue : enregistrement partiel ajouté"
-                                            : "Enregistrement ajouté à la bibliothèque")
+                ToastCenter.shared.show(cut ? L("Connexion interrompue : enregistrement partiel ajouté")
+                                            : L("Enregistrement ajouté à la bibliothèque"))
             } else if let e = failure {
-                ToastCenter.shared.show("Enregistrement impossible : " + e)
+                ToastCenter.shared.show(L("Enregistrement impossible : ") + e)
             } else {
-                ToastCenter.shared.show("Aucun morceau complet enregistré (restez plus longtemps sur la station)")
+                ToastCenter.shared.show(L("Aucun morceau complet enregistré (restez plus longtemps sur la station)"))
             }
         }
     }
