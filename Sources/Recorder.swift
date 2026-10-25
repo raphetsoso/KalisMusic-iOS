@@ -118,24 +118,42 @@ final class StreamRecorder: ObservableObject {
         return Rx.replace("[^a-z0-9]", in: s.lowercased(), with: "", options: [])
     }
 
-    private static func coverData(artist: String?, title: String) async -> Data? {
+    private struct Hit {
+        var album: String?
+        var genre: String?
+        var cover: Data?
+    }
+
+    /// Cherche le morceau sur iTunes pour en tirer l'album, le genre et la pochette (le titre et l'artiste restent ceux de la radio).
+    private static func lookup(artist: String?, title: String) async -> Hit? {
         let term = ((artist ?? "") + " " + title).trimmed
         guard let q = term.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + q) else { return nil }
+              let url = URL(string: "https://itunes.apple.com/search?media=music&entity=song&limit=5&term=" + q) else { return nil }
         var req = URLRequest(url: url)
         req.timeoutInterval = 12
         guard let (data, _) = try? await URLSession.shared.data(for: req),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let results = obj["results"] as? [[String: Any]] else { return nil }
-        let want = norm(title)
-        let key = String(want.prefix(6))
+        let wantTitle = norm(title)
+        let wantArtist = norm(artist ?? "")
+        let tKey = String(wantTitle.prefix(6))
+        let aKey = String(wantArtist.prefix(4))
+        if tKey.isEmpty { return nil }
         for r in results {
             let name = norm((r["trackName"] as? String) ?? "")
-            guard !key.isEmpty, name.contains(key) || want.contains(String(name.prefix(6))),
-                  let art = r["artworkUrl100"] as? String else { continue }
-            let big = art.replacingOccurrences(of: "100x100bb", with: "600x600bb")
-            guard let u = URL(string: big), let (img, _) = try? await URLSession.shared.data(from: u) else { continue }
-            return img
+            let who = norm((r["artistName"] as? String) ?? "")
+            let titleOK = name.contains(tKey) || wantTitle.contains(String(name.prefix(6)))
+            let artistOK = aKey.isEmpty || who.contains(aKey) || wantArtist.contains(String(who.prefix(4)))
+            if !(titleOK && artistOK) { continue }
+            var hit = Hit()
+            if let album = r["collectionName"] as? String, !album.trimmed.isEmpty { hit.album = album }
+            if let g = r["primaryGenreName"] as? String, !g.trimmed.isEmpty { hit.genre = g }
+            if let art = r["artworkUrl100"] as? String,
+               let u = URL(string: art.replacingOccurrences(of: "100x100bb", with: "600x600bb")),
+               let (img, _) = try? await URLSession.shared.data(from: u) {
+                hit.cover = img
+            }
+            return hit
         }
         return nil
     }
@@ -158,10 +176,10 @@ final class StreamRecorder: ObservableObject {
             try? FileManager.default.removeItem(at: use)
             return
         }
+        let hit = await StreamRecorder.lookup(artist: artist, title: title)
         TagStore.shared.putField(s, title: title, artist: artist ?? station.title,
-                                 album: station.title, genre: "Radio")
-        if let data = await StreamRecorder.coverData(artist: artist, title: title),
-           let jpg = ImageUtil.jpeg(fromData: data) {
+                                 album: hit?.album ?? station.title, genre: hit?.genre ?? "Radio")
+        if let data = hit?.cover, let jpg = ImageUtil.jpeg(fromData: data) {
             TagStore.shared.setCover(s, jpegData: jpg)
         } else if let data = await StreamRecorder.stationCover(station) {
             TagStore.shared.setCover(s, jpegData: data)
