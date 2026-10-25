@@ -59,7 +59,7 @@ struct NowPlayingView: View {
     @ObservedObject private var playlists = PlaylistStore.shared
     @ObservedObject private var recorder = StreamRecorder.shared
     @State private var showQueue = false
-    @State private var tint: Color = Theme.nowPlayingBg
+    @State private var bgTint: Color = Theme.nowPlayingBg
     @State private var closeTint: Color = Color(red: 142 / 255, green: 142 / 255, blue: 147 / 255).opacity(0.7)
 
     // MARK: couleur de la pochette (comme Android : moyenne mélangée à 82 % de blanc)
@@ -76,12 +76,12 @@ struct NowPlayingView: View {
                     var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, al: CGFloat = 0
                     avg.getRed(&r, green: &g, blue: &b, alpha: &al)
                     let w: CGFloat = 0.82
-                    tint = Color(red: Double(r * (1 - w) + w), green: Double(g * (1 - w) + w), blue: Double(b * (1 - w) + w))
+                    bgTint = Color(red: Double(r * (1 - w) + w), green: Double(g * (1 - w) + w), blue: Double(b * (1 - w) + w))
                     var h: CGFloat = 0, s: CGFloat = 0, v: CGFloat = 0
                     avg.getHue(&h, saturation: &s, brightness: &v, alpha: &al)
                     closeTint = Color(UIColor(hue: h, saturation: s, brightness: min(v, 0.6), alpha: 0.7))
                 } else {
-                    tint = Theme.nowPlayingBg
+                    bgTint = Theme.nowPlayingBg
                     closeTint = Color(red: 142 / 255, green: 142 / 255, blue: 147 / 255).opacity(0.7)
                 }
             }
@@ -104,7 +104,7 @@ struct NowPlayingView: View {
             let land = geo.size.width > geo.size.height
             let inset = geo.safeAreaInsets
             ZStack(alignment: .topLeading) {
-                tint
+                bgTint
                 if let t = player.current {
                     if land {
                         // paysage : pochette carrée pleine hauteur à gauche, panneau à droite (comme layout-land)
@@ -194,7 +194,7 @@ struct NowPlayingView: View {
                                 VStack(spacing: 0) {
                                     Icon("ic_stop_square", size: 24, color: Color(red: 1, green: 0.23, blue: 0.19))
                                     TimelineView(.periodic(from: .now, by: 1)) { _ in
-                                        Text(formatTime(recorder.elapsed)).font(.system(size: 10)).monospacedDigit()
+                                        Text(formatTime(recorder.elapsed) + (recorder.tracksSaved > 0 ? " · \(recorder.tracksSaved)" : "")).font(.system(size: 10)).monospacedDigit()
                                             .foregroundColor(Color(red: 1, green: 0.23, blue: 0.19))
                                     }
                                 }
