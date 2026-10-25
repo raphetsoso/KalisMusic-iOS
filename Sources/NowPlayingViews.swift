@@ -10,32 +10,35 @@ struct ScrubberView: View {
     @State private var dragging = false
     @State private var value: Double = 0
 
+    private func track(width w: CGFloat, pos: Double, total: Double) -> some View {
+        let frac = CGFloat(min(max(pos / total, 0), 1))
+        return ZStack(alignment: .leading) {
+            Rectangle().fill(Color(white: 0.78)).frame(height: 3)
+            Rectangle().fill(Theme.accent).frame(width: w * frac, height: 3)
+            Circle().fill(Theme.accent).frame(width: 14, height: 14)
+                .offset(x: w * frac - 7)
+        }
+        .frame(height: 28)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { v in
+                    dragging = true
+                    value = Double(min(max(v.location.x / w, 0), 1)) * total
+                }
+                .onEnded { _ in
+                    player.seek(to: value)
+                    dragging = false
+                }
+        )
+    }
+
     var body: some View {
         let total = max(player.duration, 1)
         let pos = dragging ? value : min(clock.position, total)
         VStack(spacing: 0) {
             GeometryReader { g in
-                let w = max(g.size.width, 1)
-                let frac = CGFloat(min(max(pos / total, 0), 1))
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(Color(white: 0.78)).frame(height: 3)
-                    Rectangle().fill(Theme.accent).frame(width: w * frac, height: 3)
-                    Circle().fill(Theme.accent).frame(width: 14, height: 14)
-                        .offset(x: w * frac - 7)
-                }
-                .frame(height: 28)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { v in
-                            dragging = true
-                            value = Double(min(max(v.location.x / w, 0), 1)) * total
-                        }
-                        .onEnded { _ in
-                            player.seek(to: value)
-                            dragging = false
-                        }
-                )
+                track(width: max(g.size.width, 1), pos: pos, total: total)
             }
             .frame(height: 28)
             HStack {
@@ -46,7 +49,11 @@ struct ScrubberView: View {
             .font(.system(size: 12))
             .foregroundColor(Color.black.opacity(0.5))
             .monospacedDigit()
-     struct NowPlayingView: View {
+        }
+    }
+}
+
+struct NowPlayingView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var player = PlayerEngine.shared
     @ObservedObject private var playlists = PlaylistStore.shared
@@ -58,20 +65,7 @@ struct ScrubberView: View {
     // MARK: couleur de la pochette (comme Android : moyenne mélangée à 82 % de blanc)
 
     private static func average(_ img: UIImage) -> UIColor? {
-        guard let cg = img.cgImage else { return nil }
-        var px: [UInt8] = [0, 0, 0, 0]
-        let ok: Bool = px.withUnsafeMutableBytes { raw in
-            guard let ctx = CGContext(data: raw.baseAddress, width: 1, height: 1, bitsPerComponent: 8,
-                                      bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
-            ctx.interpolationQuality = .medium
-            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))
-            return true
-        }
-        if !ok { return nil }
-        let a = max(CGFloat(px[3]) / 255, 0.001)
-        return UIColor(red: min(1, CGFloat(px[0]) / 255 / a), green: min(1, CGFloat(px[1]) / 255 / a),
-                       blue: min(1, CGFloat(px[2]) / 255 / a), alpha: 1)
+        return CoverColor.average(img)
     }
 
     private func updateTint(_ t: Track) async {
@@ -259,9 +253,6 @@ struct ScrubberView: View {
     }
 }
 
-   }
-    }
-}
 
 struct QueueView: View {
     @Environment(\.dismiss) private var dismiss
@@ -445,5 +436,22 @@ struct TagEditorView: View {
         lib.rebuild()
         ToastCenter.shared.show("Enregistré")
         dismiss()
+    }
+}
+
+enum CoverColor {
+    /// Couleur moyenne d'une image (réduite à 1 pixel), comme ArtLoader.averageColor sur Android.
+    static func average(_ img: UIImage) -> UIColor? {
+        guard let cg = img.cgImage else { return nil }
+        var px = [UInt8](repeating: 0, count: 4)
+        let space = CGColorSpaceCreateDeviceRGB()
+        let info = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let ctx = CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8,
+                                  bytesPerRow: 4, space: space, bitmapInfo: info) else { return nil }
+        ctx.interpolationQuality = .medium
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        let a = max(CGFloat(px[3]) / 255, 0.001)
+        return UIColor(red: min(1, CGFloat(px[0]) / 255 / a), green: min(1, CGFloat(px[1]) / 255 / a),
+                       blue: min(1, CGFloat(px[2]) / 255 / a), alpha: 1)
     }
 }
