@@ -234,17 +234,8 @@ enum Strings {
         "Votre bibliothèque : %ld morceaux": ["Your library: %ld songs", "Deine Mediathek: %ld Titel", "Tu biblioteca: %ld canciones"],
         "%ld morceau ajouté à la bibliothèque": ["%ld track added to the library", "%ld Titel zur Mediathek hinzugefügt", "%ld canción añadida a la biblioteca"],
         "%ld morceaux ajoutés à la bibliothèque": ["%ld tracks added to the library", "%ld Titel zur Mediathek hinzugefügt", "%ld canciones añadidas a la biblioteca"],
-        "Échec du téléchargement : %@\n\nVous pouvez aussi télécharger le morceau depuis le site NCS puis l'ajouter avec Importer des morceaux.": ["Download failed: %@
-
-You can also download the track from the NCS website and add it with Import songs.", "Download fehlgeschlagen: %@
-
-Du kannst den Titel auch von der NCS-Website laden und über „Titel importieren“ hinzufügen.", "Error en la descarga: %@
-
-También puedes descargar la canción desde el sitio de NCS y añadirla con Importar canciones."],
-        "Version %@\nUn lecteur musical inspiré de Musique sur iOS 7 à 9, adapté de KalisMusic for Android.": ["Version %@
-A music player inspired by Music on iOS 7 to 9, adapted from KalisMusic for Android.", "Version %@
-Ein Musik-Player im Stil der Musik-App von iOS 7 bis 9, angepasst von KalisMusic für Android.", "Versión %@
-Un reproductor de música inspirado en Música de iOS 7 a 9, adaptado de KalisMusic para Android."],
+        "Échec du téléchargement : %@\n\nVous pouvez aussi télécharger le morceau depuis le site NCS puis l'ajouter avec Importer des morceaux.": ["Download failed: %@\n\nYou can also download the track from the NCS website and add it with Import songs.", "Download fehlgeschlagen: %@\n\nDu kannst den Titel auch von der NCS-Website laden und über „Titel importieren“ hinzufügen.", "Error en la descarga: %@\n\nTambién puedes descargar la canción desde el sitio de NCS y añadirla con Importar canciones."],
+        "Version %@\nUn lecteur musical inspiré de Musique sur iOS 7 à 9, adapté de KalisMusic for Android.": ["Version %@\nA music player inspired by Music on iOS 7 to 9, adapted from KalisMusic for Android.", "Version %@\nEin Musik-Player im Stil der Musik-App von iOS 7 bis 9, angepasst von KalisMusic für Android.", "Versión %@\nUn reproductor de música inspirado en Música de iOS 7 a 9, adaptado de KalisMusic para Android."],
         "Un seul morceau enregistré, incomplet : le titre n'a pas changé. Laissez tourner plus longtemps pour découper.": ["Only one track recorded, incomplete: the title never changed. Let it run longer to split tracks.", "Nur ein unvollständiger Titel aufgenommen: Der Titel hat sich nicht geändert. Lass die Aufnahme länger laufen, um Titel zu trennen.", "Solo se grabó una canción, incompleta: el título no cambió. Déjalo grabar más tiempo para separar canciones."],
         "Cette station n'envoie pas les titres : enregistrement en un seul fichier.": ["This station doesn't send track titles: recorded as a single file.", "Dieser Sender sendet keine Titel: als eine einzelne Datei aufgenommen.", "Esta emisora no envía los títulos: grabado en un solo archivo."],
     ]
