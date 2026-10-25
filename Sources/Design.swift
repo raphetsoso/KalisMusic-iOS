@@ -87,7 +87,8 @@ struct TitleBar<Leading: View>: View {
                     Text(title)
                         .font(.system(size: 17, weight: .bold))
                         .lineLimit(1)
-                        .padding(.horizontal, 60)
+                        .truncationMode(.tail)
+                        .padding(.horizontal, 96)
                 }
                 HStack(spacing: 0) {
                     leading
