@@ -31,7 +31,7 @@ func formatTime(_ s: Double) -> String {
 
 func formatListening(_ ms: Int64) -> String {
     let minutes = Int(ms / 60000)
-    if minutes < 1 { return "Moins d'une minute" }
+    if minutes < 1 { return L("Moins d'une minute") }
     if minutes < 60 { return "\(minutes) min" }
     return String(format: "%d h %02d min", minutes / 60, minutes % 60)
 }

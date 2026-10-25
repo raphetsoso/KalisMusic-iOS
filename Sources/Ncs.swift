@@ -65,7 +65,7 @@ final class FileDownloader: NSObject, URLSessionDownloadDelegate {
         } else if let f = savedFile, let r = (response ?? (task.response as? HTTPURLResponse)) {
             cont.resume(returning: (f, r))
         } else {
-            cont.resume(throwing: KError("téléchargement impossible"))
+            cont.resume(throwing: KError(L("téléchargement impossible")))
         }
     }
 }
@@ -257,7 +257,7 @@ enum Ncs {
         } catch {
             if last == nil { last = error }
         }
-        throw last ?? KError("lien de téléchargement introuvable sur la page")
+        throw last ?? KError(L("lien de téléchargement introuvable sur la page"))
     }
 
     private static func squash(_ s: String) -> String {
@@ -280,16 +280,16 @@ enum Ncs {
             do {
                 let (bytes, resp) = try await session.bytes(for: try makeRequest(d, referer: r.pageUrl.isEmpty ? base + "/" : r.pageUrl))
                 defer { bytes.task.cancel() }
-                guard let http = resp as? HTTPURLResponse else { throw KError("réponse invalide") }
+                guard let http = resp as? HTTPURLResponse else { throw KError(L("réponse invalide")) }
                 if http.statusCode >= 400 { throw KError("HTTP \(http.statusCode)") }
                 let type = (http.value(forHTTPHeaderField: "Content-Type") ?? "").lowercased()
-                if type.hasPrefix("text/") { throw KError("le site demande une validation") }
+                if type.hasPrefix("text/") { throw KError(L("le site demande une validation")) }
                 return http.url?.absoluteString ?? d
             } catch {
                 last = error
             }
         }
-        throw last ?? KError("lien introuvable")
+        throw last ?? KError(L("lien introuvable"))
     }
 
     /// Liens de téléchargement d'une page de morceau, les plus fiables d'abord.
@@ -313,13 +313,13 @@ enum Ncs {
         let type = (http.value(forHTTPHeaderField: "Content-Type") ?? "").lowercased()
         if type.hasPrefix("text/") {
             try? FileManager.default.removeItem(at: tmp)
-            throw KError("le site demande une validation (connexion ou licence)")
+            throw KError(L("le site demande une validation (connexion ou licence)"))
         }
         let attrs = try? FileManager.default.attributesOfItem(atPath: tmp.path)
         let size = (attrs?[.size] as? NSNumber)?.int64Value ?? 0
         if size < 50 * 1024 {
             try? FileManager.default.removeItem(at: tmp)
-            throw KError("fichier reçu trop petit")
+            throw KError(L("fichier reçu trop petit"))
         }
         let dir = Paths.caches.appendingPathComponent("ncs", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -340,9 +340,9 @@ enum Ncs {
             if let m = Rx.first(a, in: html) ?? Rx.first(b, in: html) { url = abs(m[1]) }
         }
         if url == nil { url = r.coverUrl }
-        guard let u = url else { throw KError("pochette introuvable") }
+        guard let u = url else { throw KError(L("pochette introuvable")) }
         let (data, _) = try await session.data(for: try makeRequest(u, referer: base + "/"))
-        if data.count < 1024 { throw KError("pochette vide") }
+        if data.count < 1024 { throw KError(L("pochette vide")) }
         return data
     }
 

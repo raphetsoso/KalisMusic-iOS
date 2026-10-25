@@ -132,8 +132,8 @@ struct NowPlayingView: View {
                     }
                 } else {
                     VStack(spacing: 16) {
-                        Text("Aucune lecture").foregroundColor(Theme.gray)
-                        PinkButton(title: "Fermer") { dismiss() }
+                        Text(L("Aucune lecture")).foregroundColor(Theme.gray)
+                        PinkButton(title: L("Fermer")) { dismiss() }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -152,7 +152,7 @@ struct NowPlayingView: View {
     private func panel(_ t: Track) -> some View {
         VStack(spacing: 0) {
             if t.stream {
-                Text(player.isLoading ? "CONNEXION…" : "EN DIRECT")
+                Text(player.isLoading ? L("CONNEXION…") : L("EN DIRECT"))
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 10)
@@ -261,7 +261,7 @@ struct QueueView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                Text("À suivre").font(.system(size: 17, weight: .bold))
+                Text(L("À suivre")).font(.system(size: 17, weight: .bold))
                 HStack {
                     Spacer()
                     Button("OK") { dismiss() }
@@ -328,10 +328,10 @@ struct TagEditorView: View {
         NavigationStack {
             List {
                 Section {
-                    TextField("Titre", text: $title)
-                    TextField("Artiste", text: $artist)
-                    TextField("Album", text: $album)
-                    TextField("Genre", text: $genre)
+                    TextField(L("Titre"), text: $title)
+                    TextField(L("Artiste"), text: $artist)
+                    TextField(L("Album"), text: $album)
+                    TextField(L("Genre"), text: $genre)
                 }
                 Section {
                     HStack(spacing: 14) {
@@ -345,8 +345,8 @@ struct TagEditorView: View {
                         .frame(width: 72, height: 72)
                         .clipped()
                         VStack(alignment: .leading, spacing: 8) {
-                            Button("Choisir une pochette…") { pickingCover = true }
-                            Button("Retirer la pochette", role: .destructive) {
+                            Button(L("Choisir une pochette…")) { pickingCover = true }
+                            Button(L("Retirer la pochette"), role: .destructive) {
                                 if let c = cover { Paths.deleteCover(c) }
                                 cover = nil
                                 removeCover = true
@@ -355,32 +355,32 @@ struct TagEditorView: View {
                         }
                         .buttonStyle(.borderless)
                     }
-                    Toggle("Appliquer album, artiste, genre et pochette à tout l'album", isOn: $applyToAlbum)
+                    Toggle(L("Appliquer album, artiste, genre et pochette à tout l'album"), isOn: $applyToAlbum)
                         .tint(Theme.accent)
                 }
                 Section {
-                    Button("Rétablir les infos d'origine", role: .destructive) {
+                    Button(L("Rétablir les infos d'origine"), role: .destructive) {
                         TagStore.shared.reset(track.source)
                         MusicLibrary.shared.rebuild()
-                        ToastCenter.shared.show("Enregistré")
+                        ToastCenter.shared.show(L("Enregistré"))
                         dismiss()
                     }
                 } footer: {
-                    Text("Les infos sont enregistrées dans l'appli (les fichiers ne sont pas modifiés).")
+                    Text(L("Les infos sont enregistrées dans l'appli (les fichiers ne sont pas modifiés)."))
                 }
             }
             .kalisGrouped()
-            .navigationTitle("Modifier les infos")
+            .navigationTitle(L("Modifier les infos"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annuler") {
+                    Button(L("Annuler")) {
                         if let c = cover { Paths.deleteCover(c) }
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Enregistrer") { save() }
+                    Button(L("Enregistrer")) { save() }
                 }
             }
             .sheet(isPresented: $pickingCover) {
@@ -393,7 +393,7 @@ struct TagEditorView: View {
                         removeCover = false
                         preview = ImageUtil.thumbnail(fileURL: Paths.url(forCover: rel), maxDim: 300)
                     } else {
-                        ToastCenter.shared.show("Impossible d'utiliser cette image")
+                        ToastCenter.shared.show(L("Impossible d'utiliser cette image"))
                     }
                 }
             }
@@ -434,7 +434,7 @@ struct TagEditorView: View {
             ArtLoader.invalidate(t.source)
         }
         lib.rebuild()
-        ToastCenter.shared.show("Enregistré")
+        ToastCenter.shared.show(L("Enregistré"))
         dismiss()
     }
 }

@@ -114,7 +114,7 @@ struct TitleBar<Leading: View>: View {
             if let s = search, searching {
                 HStack(spacing: 8) {
                     Icon("ic_search", size: 18, color: Theme.gray)
-                    TextField("Rechercher", text: s)
+                    TextField(L("Rechercher"), text: s)
                         .focused($focused)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
@@ -151,7 +151,7 @@ struct PageBar: View {
             } label: {
                 HStack(spacing: 0) {
                     Icon("ic_chevron_left", size: 28, color: Theme.accent)
-                    Text("Retour").font(.system(size: 16)).foregroundColor(Theme.accent)
+                    Text(L("Retour")).font(.system(size: 16)).foregroundColor(Theme.accent)
                 }
                 .padding(.leading, 6)
                 .frame(height: 52)
@@ -204,11 +204,11 @@ struct KTabBar: View {
 
     private struct Item { let tag: Int; let label: String; let icon: String; let iconOn: String }
     private var items: [Item] {
-        var l: [Item] = [Item(tag: 0, label: "Pour vous", icon: "ic_heart", iconOn: "ic_heart_filled")]
+        var l: [Item] = [Item(tag: 0, label: L("Pour vous"), icon: "ic_heart", iconOn: "ic_heart_filled")]
         if showStore { l.append(Item(tag: 1, label: "KalisStore", icon: "ic_bag", iconOn: "ic_bag_filled")) }
         l.append(Item(tag: 2, label: "Radio", icon: "ic_radio", iconOn: "ic_radio"))
-        l.append(Item(tag: 3, label: "Import", icon: "ic_import", iconOn: "ic_import"))
-        l.append(Item(tag: 4, label: "Ma musique", icon: "ic_note", iconOn: "ic_note"))
+        l.append(Item(tag: 3, label: L("Import"), icon: "ic_import", iconOn: "ic_import"))
+        l.append(Item(tag: 4, label: L("Ma musique"), icon: "ic_note", iconOn: "ic_note"))
         return l
     }
 
@@ -339,7 +339,7 @@ struct SectionHeader: View {
 }
 
 struct ShuffleRow: View {
-    var label = "Aléatoire"
+    var label = L("Aléatoire")
     let action: () -> Void
     var body: some View {
         Button(action: action) {

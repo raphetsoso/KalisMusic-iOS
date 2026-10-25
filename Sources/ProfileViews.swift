@@ -6,6 +6,7 @@ struct ProfileView: View {
     @ObservedObject private var data = StoreData.shared
     @State private var confirmHide = false
     @State private var showAbout = false
+    @ObservedObject private var lang = Lang.shared
 
     private var versionText: String {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.1"
@@ -15,50 +16,61 @@ struct ProfileView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Votre compte est local.").foregroundColor(Theme.gray)
-                    Text("\(data.installed().count) musiques KalisStore installées")
+                    Text(L("Votre compte est local.")).foregroundColor(Theme.gray)
+                    Text(LF("%ld musiques KalisStore installées", data.installed().count))
                         .foregroundColor(Theme.accent)
                 }
                 Section {
-                    NavigationLink("Musiques du KalisStore") { StoreDownloadsView() }
-                    NavigationLink("Historique des achats") { StoreHistoryView() }
-                    NavigationLink("Statistiques") { StatsView() }
-                    NavigationLink("Sauvegarde et restauration") { BackupView() }
-                    Button("À propos") { showAbout = true }
+                    Picker(L("Langue"), selection: $lang.setting) {
+                        Text(L("Automatique")).tag("auto")
+                        Text("Français").tag("fr")
+                        Text("English").tag("en")
+                        Text("Deutsch").tag("de")
+                        Text("Español").tag("es")
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section {
+                    NavigationLink(L("Musiques du KalisStore")) { StoreDownloadsView() }
+                    NavigationLink(L("Historique des achats")) { StoreHistoryView() }
+                    NavigationLink(L("Statistiques")) { StatsView() }
+                    NavigationLink(L("Sauvegarde et restauration")) { BackupView() }
+                    Button(L("À propos")) { showAbout = true }
                         .foregroundColor(.primary)
                 }
                 Section {
                     if data.hidden {
-                        Button("Réactiver le KalisStore") { data.hidden = false }
+                        Button(L("Réactiver le KalisStore")) { data.hidden = false }
                             .foregroundColor(Theme.accent)
                     } else {
-                        Button("Retirer le KalisStore de l'interface", role: .destructive) { confirmHide = true }
+                        Button(L("Retirer le KalisStore de l'interface"), role: .destructive) { confirmHide = true }
                     }
                 } footer: {
                     Text(data.hidden
-                         ? "L'onglet KalisStore est masqué. Vos musiques téléchargées restent sur l'appareil."
-                         : "Masque l'onglet KalisStore. Vous pouvez le réactiver ici à tout moment.")
+                         ? L("L'onglet KalisStore est masqué. Vos musiques téléchargées restent sur l'appareil.")
+                         : L("Masque l'onglet KalisStore. Vous pouvez le réactiver ici à tout moment."))
                 }
             }
             .listStyle(.grouped)
-            .navigationTitle("Compte local")
+            .navigationTitle(L("Compte local"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("OK") { dismiss() }
                 }
             }
-            .alert("Masquer l'onglet KalisStore ? Vous pourrez le réactiver depuis cette page.",
+            .alert(L("Masquer l'onglet KalisStore ? Vous pourrez le réactiver depuis cette page."),
                    isPresented: $confirmHide) {
-                Button("Annuler", role: .cancel) {}
+                Button(L("Annuler"), role: .cancel) {}
                 Button("OK") { data.hidden = true }
             }
             .alert("KalisMusic for iOS", isPresented: $showAbout) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text("Version \(versionText)\nUn lecteur musical inspiré de Musique sur iOS 7 à 9, adapté de KalisMusic for Android.")
+                Text(LF("Version %@\nUn lecteur musical inspiré de Musique sur iOS 7 à 9, adapté de KalisMusic for Android.", versionText))
             }
         }
+        .id(lang.setting)
     }
 }
 
@@ -73,7 +85,7 @@ struct StoreDownloadsView: View {
         List {
             Section {
                 if list.isEmpty {
-                    Text("Aucune musique du KalisStore sur cet appareil.").foregroundColor(Theme.gray)
+                    Text(L("Aucune musique du KalisStore sur cet appareil.")).foregroundColor(Theme.gray)
                 }
                 ForEach(list) { e in
                     HStack {
@@ -82,21 +94,21 @@ struct StoreDownloadsView: View {
                             if !e.artist.isEmpty { Text(e.artist).font(.caption).foregroundColor(Theme.gray) }
                         }
                         Spacer()
-                        Button("Retirer", role: .destructive) { removing = e }
+                        Button(L("Retirer"), role: .destructive) { removing = e }
                             .buttonStyle(.borderless)
                     }
                 }
             } footer: {
-                Text("Uniquement les musiques téléchargées depuis le KalisStore. Retirer un morceau le supprime de l'appareil ; vous pourrez le retélécharger depuis le store.")
+                Text(L("Uniquement les musiques téléchargées depuis le KalisStore. Retirer un morceau le supprime de l'appareil ; vous pourrez le retélécharger depuis le store."))
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Musiques du KalisStore")
+        .navigationTitle(L("Musiques du KalisStore"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Retirer cette musique de l'appareil ?",
+        .alert(L("Retirer cette musique de l'appareil ?"),
                isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
-            Button("Annuler", role: .cancel) { removing = nil }
-            Button("Retirer", role: .destructive) {
+            Button(L("Annuler"), role: .cancel) { removing = nil }
+            Button(L("Retirer"), role: .destructive) {
                 if let e = removing {
                     if let t = MusicLibrary.shared.byPath(e.file) {
                         Importer.delete(t)
@@ -122,7 +134,7 @@ struct StoreHistoryView: View {
         List {
             Section {
                 if list.isEmpty {
-                    Text("Aucun achat pour l'instant.").foregroundColor(Theme.gray)
+                    Text(L("Aucun achat pour l'instant.")).foregroundColor(Theme.gray)
                 }
                 ForEach(Array(list.enumerated()), id: \.offset) { _, item in
                     HStack {
@@ -134,17 +146,17 @@ struct StoreHistoryView: View {
                                 .lineLimit(1)
                         }
                         Spacer()
-                        Text(item.installed ? "Installé" : "Retiré")
+                        Text(item.installed ? L("Installé") : L("Retiré"))
                             .font(.footnote)
                             .foregroundColor(item.installed ? Theme.accent : Theme.gray)
                     }
                 }
             } footer: {
-                Text("Tout ce que vous avez téléchargé depuis le KalisStore, même si retiré depuis.")
+                Text(L("Tout ce que vous avez téléchargé depuis le KalisStore, même si retiré depuis."))
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Historique des achats")
+        .navigationTitle(L("Historique des achats"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -169,17 +181,17 @@ struct StatsView: View {
         let artists = stats.topArtists(1)
         List {
             Section {
-                row("Temps d'écoute", formatListening(d.totalMs))
-                row("Morceaux joués", "\(d.totalPlays)")
-                if let t = tracks.first { row("Morceau le plus joué", t.title, "\(t.plays) écoutes") }
+                row(L("Temps d'écoute"), formatListening(d.totalMs))
+                row(L("Morceaux joués"), "\(d.totalPlays)")
+                if let t = tracks.first { row(L("Morceau le plus joué"), t.title, LF("%ld écoutes", t.plays)) }
                 if let g = genres.first {
-                    row("Genre préféré", g.title, share(g.ms, d.totalMs))
+                    row(L("Genre préféré"), g.title, share(g.ms, d.totalMs))
                 }
                 if let a = artists.first {
-                    row("Artiste préféré", a.title, share(a.ms, d.totalMs))
+                    row(L("Artiste préféré"), a.title, share(a.ms, d.totalMs))
                 }
             } footer: {
-                Text("Comptées sur cet appareil pendant la lecture.")
+                Text(L("Comptées sur cet appareil pendant la lecture."))
             }
             if !tracks.isEmpty {
                 Section {
@@ -191,11 +203,11 @@ struct StatsView: View {
                                 Text(t.artist).font(.caption).foregroundColor(Theme.gray).lineLimit(1)
                             }
                             Spacer()
-                            Text("\(t.plays) écoutes").font(.footnote).foregroundColor(Theme.gray)
+                            Text(LF("%ld écoutes", t.plays)).font(.footnote).foregroundColor(Theme.gray)
                         }
                     }
                 } header: {
-                    Text("MORCEAUX LES PLUS JOUÉS")
+                    Text(L("MORCEAUX LES PLUS JOUÉS"))
                 }
             }
             if !genres.isEmpty {
@@ -208,25 +220,25 @@ struct StatsView: View {
                         }
                     }
                 } header: {
-                    Text("GENRES LES PLUS ÉCOUTÉS")
+                    Text(L("GENRES LES PLUS ÉCOUTÉS"))
                 }
             }
             Section {
-                Button("Réinitialiser les statistiques", role: .destructive) { confirmReset = true }
+                Button(L("Réinitialiser les statistiques"), role: .destructive) { confirmReset = true }
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Statistiques")
+        .navigationTitle(L("Statistiques"))
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Réinitialiser toutes les statistiques d'écoute ?", isPresented: $confirmReset) {
-            Button("Non", role: .cancel) {}
-            Button("Oui", role: .destructive) { StatsStore.shared.reset() }
+        .alert(L("Réinitialiser toutes les statistiques d'écoute ?"), isPresented: $confirmReset) {
+            Button(L("Non"), role: .cancel) {}
+            Button(L("Oui"), role: .destructive) { StatsStore.shared.reset() }
         }
     }
 
     private func share(_ ms: Int64, _ total: Int64) -> String {
         if total <= 0 { return "" }
-        return "\(Int(100 * ms / total)) % de votre temps d'écoute"
+        return LF("%ld %% de votre temps d'écoute", Int(100 * ms / total))
     }
 
     private func row(_ label: String, _ value: String, _ sub: String = "") -> some View {
@@ -249,20 +261,20 @@ struct BackupView: View {
     var body: some View {
         List {
             Section {
-                Text("Enregistrez vos playlists, tags, statistiques et données du KalisStore dans un fichier, puis restaurez-le sur un autre téléphone (iPhone ou Android).")
+                Text(L("Enregistrez vos playlists, tags, statistiques et données du KalisStore dans un fichier, puis restaurez-le sur un autre téléphone (iPhone ou Android)."))
                     .font(.subheadline)
                     .foregroundColor(Theme.gray)
-                Button("Exporter vers un fichier…") { export() }
-                Button("Restaurer depuis un fichier…") { pickRestore = true }
+                Button(L("Exporter vers un fichier…")) { export() }
+                Button(L("Restaurer depuis un fichier…")) { pickRestore = true }
             } footer: {
-                Text("Le fichier contient : playlists et favoris, tags et pochettes modifiés, statistiques, stations de radio ajoutées, historique et liste de souhaits du KalisStore. Les morceaux eux-mêmes n'y sont pas. Sur le nouveau téléphone, importez d'abord vos morceaux, puis restaurez : chaque morceau est retrouvé par son nom de fichier.")
+                Text(L("Le fichier contient : playlists et favoris, tags et pochettes modifiés, statistiques, stations de radio ajoutées, historique et liste de souhaits du KalisStore. Les morceaux eux-mêmes n'y sont pas. Sur le nouveau téléphone, importez d'abord vos morceaux, puis restaurez : chaque morceau est retrouvé par son nom de fichier."))
             }
             if let m = message {
                 Section { Text(m).font(.subheadline) }
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Sauvegarde")
+        .navigationTitle(L("Sauvegarde"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showShare) {
             if let u = exportURL { ShareSheet(items: [u]) }
@@ -286,9 +298,9 @@ struct BackupView: View {
             try data.write(to: url, options: .atomic)
             exportURL = url
             showShare = true
-            message = "Sauvegarde enregistrée"
+            message = L("Sauvegarde enregistrée")
         } catch {
-            message = "Sauvegarde impossible : " + error.localizedDescription
+            message = L("Sauvegarde impossible : ") + error.localizedDescription
         }
     }
 
@@ -296,9 +308,9 @@ struct BackupView: View {
         do {
             let data = try Data(contentsOf: url)
             let s = try BackupManager.restore(data)
-            var text = "Restauré : \(s.playlists) playlists, \(s.tags) morceaux modifiés, statistiques : \(s.stats ? "oui" : "non"), \(s.store) entrées du KalisStore."
+            var text = LF("Restauré : %ld playlists, %ld morceaux modifiés, statistiques : %@, %ld entrées du KalisStore.", s.playlists, s.tags, s.stats ? L(L("oui")) : L(L("non")), s.store)
             if s.missing > 0 {
-                text += "\n\(s.missing) morceaux de la sauvegarde sont introuvables sur ce téléphone. Importez-les, puis restaurez à nouveau."
+                text += "\n" + LF("%ld morceaux de la sauvegarde sont introuvables sur ce téléphone. Importez-les, puis restaurez à nouveau.", s.missing)
             }
             message = text
         } catch {

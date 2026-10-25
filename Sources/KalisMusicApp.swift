@@ -4,6 +4,7 @@ struct RootView: View {
     @EnvironmentObject private var app: AppState
     @ObservedObject private var store = StoreData.shared
     @ObservedObject private var toast = ToastCenter.shared
+    @ObservedObject private var lang = Lang.shared
     @State private var visited: Set<Int> = [4]
 
     @ViewBuilder
@@ -49,6 +50,7 @@ struct RootView: View {
             }
         }
         .tint(Theme.accent)
+        .id(lang.setting)
         .animation(.easeInOut(duration: 0.2), value: toast.message)
         .onChange(of: app.tab) { t in visited.insert(t) }
         .onChange(of: store.hidden) { hidden in
@@ -80,7 +82,7 @@ struct KalisMusicApp: App {
                     Task {
                         let res = await Importer.importAsync([url], move: false) { _, _, _ in }
                         await MainActor.run {
-                            ToastCenter.shared.show("\(res.added) ajoutés, \(res.skipped) ignorés")
+                            ToastCenter.shared.show(LF("%ld ajoutés, %ld ignorés", res.added, res.skipped))
                             MusicLibrary.shared.refresh()
                         }
                     }

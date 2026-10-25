@@ -87,7 +87,7 @@ enum BackupManager {
     static func restore(_ data: Data) throws -> Summary {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               (root["app"] as? String) == "KalisMusic" else {
-            throw KError("Ce fichier n'est pas une sauvegarde KalisMusic.")
+            throw KError(L("Ce fichier n'est pas une sauvegarde KalisMusic."))
         }
         var sum = Summary()
         let names = byName()

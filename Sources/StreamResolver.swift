@@ -57,11 +57,11 @@ enum StreamResolver {
         for c in candidates {
             do { return try await probe(c, depth: depth) } catch { last = error }
         }
-        throw last ?? KError("adresse invalide")
+        throw last ?? KError(L("adresse invalide"))
     }
 
     private static func request(_ url: String) throws -> URLRequest {
-        guard let u = URL(string: Ncs.encodeUrl(url)) else { throw KError("adresse invalide") }
+        guard let u = URL(string: Ncs.encodeUrl(url)) else { throw KError(L("adresse invalide")) }
         var req = URLRequest(url: u)
         req.setValue(ua, forHTTPHeaderField: "User-Agent")
         req.timeoutInterval = 12
@@ -71,7 +71,7 @@ enum StreamResolver {
     private static func probe(_ url: String, depth: Int) async throws -> String {
         let (bytes, resp) = try await session.bytes(for: try request(url))
         defer { bytes.task.cancel() }
-        guard let http = resp as? HTTPURLResponse else { throw KError("réponse invalide") }
+        guard let http = resp as? HTTPURLResponse else { throw KError(L("réponse invalide")) }
         if http.statusCode >= 400 { throw KError("HTTP \(http.statusCode)") }
 
         let finalURL = http.url?.absoluteString ?? url
@@ -109,7 +109,7 @@ enum StreamResolver {
 
         if playlist || body.hasPrefix("[playlist]") || body.hasPrefix("#EXTM3U") {
             let entries = playlistEntries(body, base: finalURL)
-            if depth >= maxDepth { throw KError("liste de lecture trop imbriquée") }
+            if depth >= maxDepth { throw KError(L("liste de lecture trop imbriquée")) }
             var last: Error? = nil
             var n = 0
             for e in entries {
@@ -117,11 +117,11 @@ enum StreamResolver {
                 n += 1
                 do { return try await discover(e, depth: depth + 1) } catch { last = error }
             }
-            throw last ?? KError("liste de lecture vide")
+            throw last ?? KError(L("liste de lecture vide"))
         }
 
         // page web : on cherche le flux dans le code de la page
-        if depth >= maxDepth { throw KError("aucun flux audio trouvé sur la page") }
+        if depth >= maxDepth { throw KError(L("aucun flux audio trouvé sur la page")) }
         let found = streamsInPage(body, base: finalURL)
         var last: Error? = nil
         var n = 0
@@ -130,7 +130,7 @@ enum StreamResolver {
             n += 1
             do { return try await discover(c, depth: depth + 1) } catch { last = error }
         }
-        throw KError("aucun flux audio trouvé sur cette page web" + (last == nil ? "" : " (\(last!.localizedDescription))"))
+        throw KError(L("aucun flux audio trouvé sur cette page web") + (last == nil ? "" : " (\(last!.localizedDescription))"))
     }
 
     // MARK: Analyse de page

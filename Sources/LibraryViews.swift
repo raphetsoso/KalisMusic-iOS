@@ -22,12 +22,12 @@ struct SongListView: View {
 
     private var title: String {
         switch source {
-        case .album(let k): return lib.album(k)?.name ?? "Album"
+        case .album(let k): return lib.album(k)?.name ?? L("Album")
         case .genre(let n): return n
         case .artist(let n): return n
-        case .songs: return "Morceaux"
+        case .songs: return L("Morceaux")
         case .playlist(let n): return n
-        case .favorites: return "Favoris"
+        case .favorites: return L("Favoris")
         case .fixed(let t, _): return t
         }
     }
@@ -78,7 +78,7 @@ struct SongListView: View {
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
                             Text(a.artist).font(.system(size: 16)).foregroundColor(Theme.accent).lineLimit(1)
-                            Text("\(a.tracks.count) morceaux").font(.system(size: 13)).foregroundColor(Theme.gray)
+                            Text(LF("%ld morceaux", a.tracks.count)).font(.system(size: 13)).foregroundColor(Theme.gray)
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity)
@@ -87,7 +87,7 @@ struct SongListView: View {
                         ShuffleRow { player.play(list, start: -1, shuffle: true) }
                     }
                     if list.isEmpty {
-                        Text(query.isEmpty ? "Aucun morceau" : "Aucun résultat")
+                        Text(query.isEmpty ? L("Aucun morceau") : L("Aucun résultat"))
                             .foregroundColor(Theme.gray)
                             .padding(24)
                     }
@@ -170,7 +170,7 @@ struct AlbumRowLink: View {
                 SongListView(source: .album(album.key))
             } label: {
                 RowLabel(art: ArtView(tracks: album.tracks), title: album.name,
-                         sub: album.artist + " • \(album.tracks.count) morceaux")
+                         sub: album.artist + " • " + LF("%ld morceaux", album.tracks.count))
             }
             .buttonStyle(RowPressStyle())
         } trailing: {
@@ -201,29 +201,29 @@ struct ForYouView: View {
     }
 
     var body: some View {
-        TabScreen("Pour vous") {
+        TabScreen(L("Pour vous")) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if lib.isEmpty {
-                        EmptyStateView(title: "Aucune musique",
-                                       message: "Ajoutez des morceaux depuis l'onglet Import.")
+                        EmptyStateView(title: L("Aucune musique"),
+                                       message: L("Ajoutez des morceaux depuis l'onglet Import."))
                     } else {
                         if heavy.isEmpty {
-                            Text("Écoutez de la musique et vos préférés apparaîtront ici.")
+                            Text(L("Écoutez de la musique et vos préférés apparaîtront ici."))
                                 .font(.system(size: 15))
                                 .foregroundColor(Theme.gray)
                                 .padding(16)
                         } else {
-                            SectionHeader("Les plus écoutés", big: true)
+                            SectionHeader(L("Les plus écoutés"), big: true)
                             AlbumCarousel(albums: heavy, size: 140)
                         }
                         if !picks.isEmpty {
-                            SectionHeader("Sélection pour vous", big: true)
+                            SectionHeader(L("Sélection pour vous"), big: true)
                             AlbumCarousel(albums: picks, size: 140)
                         }
                         let recent = lib.recentAlbums(30)
                         if !recent.isEmpty {
-                            SectionHeader("Nouveautés", big: true)
+                            SectionHeader(L("Nouveautés"), big: true)
                             ForEach(recent) { a in AlbumRowLink(album: a) }
                         }
                     }
@@ -245,10 +245,10 @@ enum CategoryKind: Int {
     case genres = 0, artists, albums, songs
     var title: String {
         switch self {
-        case .genres: return "Genres"
-        case .artists: return "Artistes"
-        case .albums: return "Albums"
-        case .songs: return "Morceaux"
+        case .genres: return L("Genres")
+        case .artists: return L("Artistes")
+        case .albums: return L("Albums")
+        case .songs: return L("Morceaux")
         }
     }
 }
@@ -259,8 +259,8 @@ struct MyMusicView: View {
     @State private var query = ""
 
     var body: some View {
-        TabScreen("Ma musique", search: $query,
-                  center: AnyView(KSegmented(labels: ["Bibliothèque", "Playlists"], selection: $segment)),
+        TabScreen(L("Ma musique"), search: $query,
+                  center: AnyView(KSegmented(labels: [L("Bibliothèque"), L("Playlists")], selection: $segment)),
                   leading: {
             Button {
                 app.showProfile = true
@@ -292,9 +292,9 @@ struct LibraryList: View {
         Group {
             if lib.isEmpty {
                 ScrollView {
-                    EmptyStateView(title: "Aucune musique",
-                                   message: "Ajoutez des morceaux depuis l'onglet Import, ou copiez des fichiers dans le dossier KalisMusic/Music de l'application Fichiers.",
-                                   buttonTitle: "Ajouter de la musique") { app.tab = 3 }
+                    EmptyStateView(title: L("Aucune musique"),
+                                   message: L("Ajoutez des morceaux depuis l'onglet Import, ou copiez des fichiers dans le dossier KalisMusic/Music de l'application Fichiers."),
+                                   buttonTitle: L("Ajouter de la musique")) { app.tab = 3 }
                 }
             } else {
                 ScrollView {
@@ -309,10 +309,10 @@ struct LibraryList: View {
 
     @ViewBuilder
     private var regularContent: some View {
-        ShuffleRow(label: "Shuffle") { player.play(lib.tracks, start: -1, shuffle: true) }
+        ShuffleRow(label: L("Shuffle")) { player.play(lib.tracks, start: -1, shuffle: true) }
         let recent = lib.recentAlbums(12)
         if !recent.isEmpty {
-            SectionHeader("AJOUTÉS RÉCEMMENT")
+            SectionHeader(L("AJOUTÉS RÉCEMMENT"))
             AlbumCarousel(albums: recent)
         }
         categoryChooser
@@ -339,10 +339,10 @@ struct LibraryList: View {
 
     private var categoryChooser: some View {
         Menu {
-            Button("Genres") { kind = .genres }
-            Button("Artistes") { kind = .artists }
-            Button("Albums") { kind = .albums }
-            Button("Morceaux") { kind = .songs }
+            Button(L("Genres")) { kind = .genres }
+            Button(L("Artistes")) { kind = .artists }
+            Button(L("Albums")) { kind = .albums }
+            Button(L("Morceaux")) { kind = .songs }
         } label: {
             HStack(spacing: 0) {
                 Rectangle().fill(Theme.accent).frame(height: 1)
@@ -362,7 +362,7 @@ struct LibraryList: View {
     private var searchContent: some View {
         let found = lib.search(query)
         if found.isEmpty {
-            Text("Aucun résultat").foregroundColor(Theme.gray).padding(24)
+            Text(L("Aucun résultat")).foregroundColor(Theme.gray).padding(24)
         }
         ForEach(Array(found.enumerated()), id: \.offset) { i, t in
             TrackRow(track: t, subtitle: t.artist + " — " + t.album, actions: actions) {
@@ -384,7 +384,7 @@ struct NameRowLink: View {
                 SongListView(source: source)
             } label: {
                 RowLabel(art: ArtView(tracks: tracks), title: name,
-                         sub: "\(lib.albumCount(tracks)) albums • \(tracks.count) morceaux")
+                         sub: LF("%ld albums • %ld morceaux", lib.albumCount(tracks), tracks.count))
             }
             .buttonStyle(RowPressStyle())
         } trailing: {
@@ -409,8 +409,8 @@ struct PlaylistsList: View {
                     NavigationLink {
                         SongListView(source: .favorites)
                     } label: {
-                        RowLabel(art: iconArt("ic_heart_filled"), title: "Favoris",
-                                 sub: "\(playlists.favoriteTracks().count) morceaux")
+                        RowLabel(art: iconArt("ic_heart_filled"), title: L("Favoris"),
+                                 sub: LF("%ld morceaux", playlists.favoriteTracks().count))
                     }
                     .buttonStyle(RowPressStyle())
                 } trailing: {
@@ -421,12 +421,12 @@ struct PlaylistsList: View {
                         NavigationLink {
                             SongListView(source: .playlist(n))
                         } label: {
-                            RowLabel(art: iconArt("ic_list"), title: n, sub: "\(playlists.count(n)) morceaux")
+                            RowLabel(art: iconArt("ic_list"), title: n, sub: LF("%ld morceaux", playlists.count(n)))
                         }
                         .buttonStyle(RowPressStyle())
                     } trailing: {
                         Menu {
-                            Button("Supprimer la playlist", role: .destructive) { deleting = n }
+                            Button(L("Supprimer la playlist"), role: .destructive) { deleting = n }
                         } label: {
                             Icon("ic_more", size: 24, color: Theme.accent).frame(width: 52, height: 72)
                         }
@@ -437,7 +437,7 @@ struct PlaylistsList: View {
                 } label: {
                     HStack(spacing: 12) {
                         Icon("ic_add", size: 24, color: Theme.accent)
-                        Text("Nouvelle playlist…").font(.system(size: 18)).foregroundColor(Theme.accent)
+                        Text(L("Nouvelle playlist…")).font(.system(size: 18)).foregroundColor(Theme.accent)
                         Spacer()
                     }
                     .padding(.horizontal, 16)
@@ -448,17 +448,17 @@ struct PlaylistsList: View {
             }
         }
         .sheet(isPresented: $showNew) {
-            NamePromptView(title: "Nouvelle playlist", placeholder: "Nom de la playlist", confirm: "Créer") { n in
+            NamePromptView(title: L("Nouvelle playlist"), placeholder: L("Nom de la playlist"), confirm: L("Créer")) { n in
                 playlists.create(n)
             }
         }
-        .alert("Supprimer cette playlist ?", isPresented: Binding(get: { deleting != nil },
+        .alert(L("Supprimer cette playlist ?"), isPresented: Binding(get: { deleting != nil },
                                                                    set: { if !$0 { deleting = nil } })) {
-            Button("Supprimer", role: .destructive) {
+            Button(L("Supprimer"), role: .destructive) {
                 if let d = deleting { playlists.delete(d) }
                 deleting = nil
             }
-            Button("Annuler", role: .cancel) { deleting = nil }
+            Button(L("Annuler"), role: .cancel) { deleting = nil }
         }
     }
 }

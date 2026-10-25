@@ -36,11 +36,11 @@ struct RadioView: View {
                         } trailing: {
                             if st.custom {
                                 Menu {
-                                    Button("Changer la cover…") {
+                                    Button(L("Changer la cover…")) {
                                         coverTarget = st.url
                                         pickingCover = true
                                     }
-                                    Button("Supprimer", role: .destructive) { deleting = st }
+                                    Button(L("Supprimer"), role: .destructive) { deleting = st }
                                 } label: {
                                     Icon("ic_more", size: 24, color: Theme.accent).frame(width: 52, height: 72)
                                 }
@@ -52,7 +52,7 @@ struct RadioView: View {
                     } label: {
                         HStack(spacing: 12) {
                             Icon("ic_add", size: 24, color: Theme.accent)
-                            Text("Ajouter une station…").font(.system(size: 18)).foregroundColor(Theme.accent)
+                            Text(L("Ajouter une station…")).font(.system(size: 18)).foregroundColor(Theme.accent)
                             Spacer()
                         }
                         .padding(.horizontal, 16)
@@ -62,7 +62,7 @@ struct RadioView: View {
                     .buttonStyle(RowPressStyle())
                     if !lib.tracks.isEmpty {
                         Hairline().padding(.leading, 16)
-                        ShuffleRow(label: "Toute ma musique • \(lib.tracks.count) morceaux") {
+                        ShuffleRow(label: LF("Toute ma musique • %ld morceaux", lib.tracks.count)) {
                             player.play(lib.tracks, start: -1, shuffle: true)
                         }
                     }
@@ -77,17 +77,17 @@ struct RadioView: View {
                 if let rel = TagStore.importCover(from: u) {
                     RadioStore.shared.setCover(url: target, cover: rel)
                 } else {
-                    ToastCenter.shared.show("Impossible d'utiliser cette image")
+                    ToastCenter.shared.show(L("Impossible d'utiliser cette image"))
                 }
             }
         }
-        .alert("Supprimer cette station ?", isPresented: Binding(get: { deleting != nil },
+        .alert(L("Supprimer cette station ?"), isPresented: Binding(get: { deleting != nil },
                                                                  set: { if !$0 { deleting = nil } })) {
-            Button("Supprimer", role: .destructive) {
+            Button(L("Supprimer"), role: .destructive) {
                 if let d = deleting { RadioStore.shared.remove(url: d.url) }
                 deleting = nil
             }
-            Button("Annuler", role: .cancel) { deleting = nil }
+            Button(L("Annuler"), role: .cancel) { deleting = nil }
         }
     }
 }
@@ -110,19 +110,19 @@ struct AddStationView: View {
         NavigationStack {
             List {
                 Section {
-                    TextField("Nom de la station", text: $name)
-                    TextField("Site web ou adresse du flux (ex. www.fip.fr)", text: $url)
+                    TextField(L("Nom de la station"), text: $name)
+                    TextField(L("Site web ou adresse du flux (ex. www.fip.fr)"), text: $url)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    Toggle("Station AM (sinon FM)", isOn: $isAM)
+                    Toggle(L("Station AM (sinon FM)"), isOn: $isAM)
                         .tint(Theme.accent)
                 }
                 Section {
-                    Button(cover == nil ? "Choisir une cover…" : "Changer la cover…") { pickingCover = true }
+                    Button(cover == nil ? L("Choisir une cover…") : L("Changer la cover…")) { pickingCover = true }
                         .foregroundColor(Theme.accent)
                     if cover != nil {
-                        Button("Retirer la cover", role: .destructive) {
+                        Button(L("Retirer la cover"), role: .destructive) {
                             Paths.deleteCover(cover)
                             cover = nil
                         }
@@ -130,24 +130,24 @@ struct AddStationView: View {
                 }
             }
             .kalisGrouped()
-            .navigationTitle("Ajouter une station")
+            .navigationTitle(L("Ajouter une station"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annuler") {
+                    Button(L("Annuler")) {
                         Paths.deleteCover(cover)
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Ajouter") {
+                    Button(L("Ajouter")) {
                         if name.trimmed.isEmpty || url.trimmed.isEmpty {
-                            ToastCenter.shared.show("Saisissez un nom et le site web ou l'adresse du flux")
+                            ToastCenter.shared.show(L("Saisissez un nom et le site web ou l'adresse du flux"))
                             return
                         }
                         let address = StreamResolver.normalize(url)
                         if RadioStore.shared.has(url: address) {
-                            ToastCenter.shared.show("Cette station existe déjà")
+                            ToastCenter.shared.show(L("Cette station existe déjà"))
                             return
                         }
                         RadioStore.shared.add(name: name, url: address,
@@ -165,7 +165,7 @@ struct AddStationView: View {
                         Paths.deleteCover(cover)
                         cover = rel
                     } else {
-                        ToastCenter.shared.show("Impossible d'utiliser cette image")
+                        ToastCenter.shared.show(L("Impossible d'utiliser cette image"))
                     }
                 }
             }
@@ -184,39 +184,39 @@ struct ImportView: View {
 
     private func run(_ urls: [URL], move: Bool) {
         busy = true
-        progressText = "Import…"
+        progressText = L("Import…")
         Task {
             let res = await Importer.importAsync(urls, move: move) { done, total, name in
-                DispatchQueue.main.async { progressText = "Import de \(done) sur \(total)… \(name)" }
+                DispatchQueue.main.async { progressText = LF("Import de %ld sur %ld… %@", done, total, name) }
             }
             await MainActor.run {
                 busy = false
                 progressText = ""
-                ToastCenter.shared.show("\(res.added) ajoutés, \(res.skipped) ignorés")
+                ToastCenter.shared.show(LF("%ld ajoutés, %ld ignorés", res.added, res.skipped))
                 MusicLibrary.shared.refresh()
             }
         }
     }
 
     var body: some View {
-        TabScreen("Import") {
+        TabScreen(L("Import")) {
             List {
                 Section {
-                    Text("Importez vos propres morceaux dans KalisMusic. Les fichiers importés sont copiés dans le dossier Music de l'application et apparaissent aussitôt dans votre bibliothèque.")
+                    Text(L("Importez vos propres morceaux dans KalisMusic. Les fichiers importés sont copiés dans le dossier Music de l'application et apparaissent aussitôt dans votre bibliothèque."))
                         .font(.subheadline)
                         .foregroundColor(Theme.gray)
-                    Text("Votre bibliothèque : \(lib.tracks.count) morceaux")
+                    Text(LF("Votre bibliothèque : %ld morceaux", lib.tracks.count))
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(Theme.accent)
                 }
                 Section {
-                    Button { pickFiles = true } label: { Label("Importer des morceaux…", systemImage: "square.and.arrow.down") }
-                    Button { pickFolder = true } label: { Label("Importer un dossier…", systemImage: "folder") }
-                    Button { MusicLibrary.shared.refresh() } label: { Label("Actualiser la bibliothèque", systemImage: "arrow.clockwise") }
+                    Button { pickFiles = true } label: { Label(L("Importer des morceaux…"), systemImage: "square.and.arrow.down") }
+                    Button { pickFolder = true } label: { Label(L("Importer un dossier…"), systemImage: "folder") }
+                    Button { MusicLibrary.shared.refresh() } label: { Label(L("Actualiser la bibliothèque"), systemImage: "arrow.clockwise") }
                     if busy || lib.scanning {
                         HStack(spacing: 10) {
                             ProgressView()
-                            Text(busy ? progressText : "Analyse de votre musique…")
+                            Text(busy ? progressText : L("Analyse de votre musique…"))
                                 .font(.footnote)
                                 .foregroundColor(Theme.gray)
                         }
@@ -224,13 +224,13 @@ struct ImportView: View {
                 }
                 .disabled(busy)
                 Section {
-                    Text("Application Fichiers : ouvrez « Sur mon iPhone » > KalisMusic > Music, copiez-y vos morceaux (MP3, M4A, FLAC, WAV, AIFF), puis touchez Actualiser la bibliothèque.")
-                    Text("Depuis Windows : avec l'application « Appareils Apple », ouvrez votre iPhone > Partage de fichiers > KalisMusic, et glissez vos fichiers dans le dossier Music.")
-                    Text("Téléchargements : tout morceau enregistré depuis Safari, Drive ou Dropbox peut être ajouté avec Importer des morceaux…")
-                    Text("Jailbreak : avec Filza, copiez simplement les fichiers dans le dossier Documents/Music de l'application.")
-                    Text("Les formats OGG et WMA ne sont pas lisibles sur iOS.")
+                    Text(L("Application Fichiers : ouvrez « Sur mon iPhone » > KalisMusic > Music, copiez-y vos morceaux (MP3, M4A, FLAC, WAV, AIFF), puis touchez Actualiser la bibliothèque."))
+                    Text(L("Depuis Windows : avec l'application « Appareils Apple », ouvrez votre iPhone > Partage de fichiers > KalisMusic, et glissez vos fichiers dans le dossier Music."))
+                    Text(L("Téléchargements : tout morceau enregistré depuis Safari, Drive ou Dropbox peut être ajouté avec Importer des morceaux…"))
+                    Text(L("Jailbreak : avec Filza, copiez simplement les fichiers dans le dossier Documents/Music de l'application."))
+                    Text(L("Les formats OGG et WMA ne sont pas lisibles sur iOS."))
                 } header: {
-                    Text("AUTRES FAÇONS D'AJOUTER DE LA MUSIQUE")
+                    Text(L("AUTRES FAÇONS D'AJOUTER DE LA MUSIQUE"))
                 }
                 .font(.footnote)
                 .foregroundColor(Theme.gray)

@@ -107,8 +107,8 @@ struct MiniPlayerView: View {
                         .buttonStyle(.plain)
                         Spacer()
                         Menu {
-                            Button("Morceau suivant") { player.next() }
-                            Button("Ouvrir le lecteur") { app.showNowPlaying = true }
+                            Button(L("Morceau suivant")) { player.next() }
+                            Button(L("Ouvrir le lecteur")) { app.showNowPlaying = true }
                         } label: {
                             Icon("ic_more", size: 24, color: Theme.accent).frame(width: 52, height: 54)
                         }
@@ -147,19 +147,19 @@ struct TrackMenuItems: View {
     @ObservedObject private var playlists = PlaylistStore.shared
 
     var body: some View {
-        Button("Lire") { player.play([track], start: 0, shuffle: false) }
-        Button("Lire ensuite") { player.playNext(track) }
-        Button("Ajouter à la file d'attente") { player.addToQueue(track) }
+        Button(L("Lire")) { player.play([track], start: 0, shuffle: false) }
+        Button(L("Lire ensuite")) { player.playNext(track) }
+        Button(L("Ajouter à la file d'attente")) { player.addToQueue(track) }
         if !track.stream {
-            Button("Ajouter à une playlist…") { actions.addingToPlaylist = track }
-            Button(playlists.isFavorite(track) ? "Retirer des favoris" : "Ajouter aux favoris") {
+            Button(L("Ajouter à une playlist…")) { actions.addingToPlaylist = track }
+            Button(playlists.isFavorite(track) ? L("Retirer des favoris") : L("Ajouter aux favoris")) {
                 playlists.toggleFavorite(track)
             }
             if let p = playlist, let pos = position {
-                Button("Retirer de la playlist", role: .destructive) { playlists.removeAt(p, pos) }
+                Button(L("Retirer de la playlist"), role: .destructive) { playlists.removeAt(p, pos) }
             }
-            Button("Modifier les infos…") { actions.editing = track }
-            Button("Supprimer de l'appareil", role: .destructive) { actions.deleting = track }
+            Button(L("Modifier les infos…")) { actions.editing = track }
+            Button(L("Supprimer de l'appareil"), role: .destructive) { actions.deleting = track }
         }
     }
 }
@@ -203,14 +203,14 @@ struct TrackActionHost: ViewModifier {
             .sheet(item: $actions.addingToPlaylist) { t in
                 PlaylistPicker(track: t)
             }
-            .alert("Supprimer ce morceau importé de votre appareil ?",
+            .alert(L("Supprimer ce morceau importé de votre appareil ?"),
                    isPresented: Binding(get: { actions.deleting != nil },
                                         set: { if !$0 { actions.deleting = nil } })) {
-                Button("Supprimer", role: .destructive) {
+                Button(L("Supprimer"), role: .destructive) {
                     if let t = actions.deleting { Importer.delete(t) }
                     actions.deleting = nil
                 }
-                Button("Annuler", role: .cancel) { actions.deleting = nil }
+                Button(L("Annuler"), role: .cancel) { actions.deleting = nil }
             }
     }
 }
@@ -251,7 +251,7 @@ struct NamePromptView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annuler") { dismiss() }
+                    Button(L("Annuler")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(confirm) {
@@ -282,7 +282,7 @@ struct PlaylistPicker: View {
                     } label: {
                         HStack(spacing: 12) {
                             Icon("ic_add", size: 22, color: Theme.accent)
-                            Text("Nouvelle playlist…").foregroundColor(Theme.accent)
+                            Text(L("Nouvelle playlist…")).foregroundColor(Theme.accent)
                         }
                     }
                 }
@@ -290,7 +290,7 @@ struct PlaylistPicker: View {
                     ForEach(playlists.names, id: \.self) { n in
                         Button {
                             playlists.add(n, track)
-                            ToastCenter.shared.show("Ajouté à « \(n) »")
+                            ToastCenter.shared.show(LF("Ajouté à « %@ »", n))
                             dismiss()
                         } label: {
                             HStack(spacing: 12) {
@@ -304,18 +304,18 @@ struct PlaylistPicker: View {
                 }
             }
             .kalisGrouped()
-            .navigationTitle("Ajouter à une playlist")
+            .navigationTitle(L("Ajouter à une playlist"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annuler") { dismiss() }
+                    Button(L("Annuler")) { dismiss() }
                 }
             }
             .sheet(isPresented: $showNew) {
-                NamePromptView(title: "Nouvelle playlist", placeholder: "Nom de la playlist", confirm: "Créer") { n in
+                NamePromptView(title: L("Nouvelle playlist"), placeholder: L("Nom de la playlist"), confirm: L("Créer")) { n in
                     if playlists.create(n) {
                         playlists.add(n, track)
-                        ToastCenter.shared.show("Ajouté à « \(n) »")
+                        ToastCenter.shared.show(LF("Ajouté à « %@ »", n))
                         dismiss()
                     }
                 }

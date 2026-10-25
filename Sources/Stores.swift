@@ -458,27 +458,27 @@ final class RadioStore: ObservableObject {
 
     // Adresses de flux publiques écrites de mémoire : elles peuvent changer.
     // Une station qui ne répond plus se corrige (ou s'ajoute) avec « Ajouter une station… ».
-    private static let builtIn: [Station] = [
-        Station(name: "France Inter", url: "https://icecast.radiofrance.fr/franceinter-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "franceinfo", url: "https://icecast.radiofrance.fr/franceinfo-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "France Culture", url: "https://icecast.radiofrance.fr/franceculture-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "France Musique", url: "https://icecast.radiofrance.fr/francemusique-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "FIP", url: "https://icecast.radiofrance.fr/fip-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "Mouv'", url: "https://icecast.radiofrance.fr/mouv-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "France Bleu", url: "https://icecast.radiofrance.fr/fb1071-midfi.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "RTL", url: "https://streaming.radio.rtl.fr/rtl-1-44-128", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "RTL2", url: "https://streaming.radio.rtl.fr/rtl2-1-44-128", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "NRJ", url: "https://cdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "Skyrock", url: "https://icecast.skyrock.net/s/natio_mp3_128k", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "RMC", url: "https://audio.bfmtv.com/rmcradio_128.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "Radio Classique", url: "https://radioclassique.ice.infomaniak.ch/radioclassique-high.mp3", band: fm, place: "France", custom: false, cover: ""),
-        Station(name: "Radio Nova", url: "https://novazz.ice.infomaniak.ch/novazz-128.mp3", band: fm, place: "France", custom: false, cover: ""),
+    private static var builtIn: [Station] { return [
+        Station(name: "France Inter", url: "https://icecast.radiofrance.fr/franceinter-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "franceinfo", url: "https://icecast.radiofrance.fr/franceinfo-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "France Culture", url: "https://icecast.radiofrance.fr/franceculture-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "France Musique", url: "https://icecast.radiofrance.fr/francemusique-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "FIP", url: "https://icecast.radiofrance.fr/fip-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "Mouv'", url: "https://icecast.radiofrance.fr/mouv-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "France Bleu", url: "https://icecast.radiofrance.fr/fb1071-midfi.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "RTL", url: "https://streaming.radio.rtl.fr/rtl-1-44-128", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "RTL2", url: "https://streaming.radio.rtl.fr/rtl2-1-44-128", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "NRJ", url: "https://cdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "Skyrock", url: "https://icecast.skyrock.net/s/natio_mp3_128k", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "RMC", url: "https://audio.bfmtv.com/rmcradio_128.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "Radio Classique", url: "https://radioclassique.ice.infomaniak.ch/radioclassique-high.mp3", band: fm, place: L("France"), custom: false, cover: ""),
+        Station(name: "Radio Nova", url: "https://novazz.ice.infomaniak.ch/novazz-128.mp3", band: fm, place: L("France"), custom: false, cover: ""),
         Station(name: "WNYC FM 93.9", url: "https://fm939.wnyc.org/wnycfm", band: fm, place: "New York", custom: false, cover: ""),
 
         Station(name: "WNYC AM 820", url: "https://am820.wnyc.org/wnycam", band: am, place: "New York", custom: false, cover: ""),
-        Station(name: "BBC Radio 5 Live", url: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_five_live", band: am, place: "Royaume-Uni", custom: false, cover: ""),
-        Station(name: "talkSPORT", url: "https://radio.talksport.com/stream", band: am, place: "Royaume-Uni", custom: false, cover: "")
-    ]
+        Station(name: "BBC Radio 5 Live", url: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_five_live", band: am, place: L("Royaume-Uni"), custom: false, cover: ""),
+        Station(name: "talkSPORT", url: "https://radio.talksport.com/stream", band: am, place: L("Royaume-Uni"), custom: false, cover: "")
+    ] }
 
     private init() {
         customs = Persist.load([CustomStation].self, key: "kalis_radios") ?? []

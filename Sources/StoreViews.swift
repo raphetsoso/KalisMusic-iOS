@@ -44,11 +44,11 @@ final class StoreModel: ObservableObject {
         let token = searchToken
         if wishMode {
             results = StoreData.shared.wishlist
-            status = results.isEmpty ? "Votre liste de souhaits est vide. Touchez le cœur d'un morceau pour le garder pour plus tard." : ""
+            status = results.isEmpty ? L("Votre liste de souhaits est vide. Touchez l'étoile d'un morceau pour le garder pour plus tard.") : ""
             markAdded()
             return
         }
-        status = "Recherche…"
+        status = L("Recherche…")
         let q = query
         let gid = genreId
         Task {
@@ -57,7 +57,7 @@ final class StoreModel: ObservableObject {
                 await MainActor.run {
                     guard token == self.searchToken else { return }
                     self.results = found
-                    self.status = found.isEmpty ? "Aucun résultat" : ""
+                    self.status = found.isEmpty ? L("Aucun résultat") : ""
                     self.markAdded()
                     self.genres = Ncs.genres()
                 }
@@ -65,7 +65,7 @@ final class StoreModel: ObservableObject {
                 await MainActor.run {
                     guard token == self.searchToken else { return }
                     self.results = []
-                    self.status = "Recherche impossible : " + error.localizedDescription
+                    self.status = L("Recherche impossible : ") + error.localizedDescription
                 }
             }
         }
@@ -93,7 +93,7 @@ final class StoreModel: ObservableObject {
 
     func download(_ r: NcsResult) {
         if states[r.pageUrl] != nil {
-            if states[r.pageUrl] == "done" { ToastCenter.shared.show("Ce morceau est déjà dans votre bibliothèque") }
+            if states[r.pageUrl] == "done" { ToastCenter.shared.show(L("Ce morceau est déjà dans votre bibliothèque")) }
             return
         }
         states[r.pageUrl] = "dl:0"
@@ -110,7 +110,7 @@ final class StoreModel: ObservableObject {
                     }
                 }
                 guard case .added(let source) = Importer.importFile(file, move: true) else {
-                    throw KError("import impossible")
+                    throw KError(L("import impossible"))
                 }
                 // infos du morceau + pochette officielle NCS
                 TagStore.shared.putField(source, title: r.title.nilIfEmpty, artist: r.artist.nilIfEmpty,
@@ -122,14 +122,14 @@ final class StoreModel: ObservableObject {
                     self.states[r.pageUrl] = "done"
                     StoreData.shared.remember(pageUrl: r.pageUrl, file: source)
                     StoreData.shared.addHistory(title: r.title, artist: r.artist, pageUrl: r.pageUrl, file: source)
-                    ToastCenter.shared.show("Ajouté à la bibliothèque")
+                    ToastCenter.shared.show(L("Ajouté à la bibliothèque"))
                     MusicLibrary.shared.refresh()
                 }
             } catch {
                 await MainActor.run {
                     self.states.removeValue(forKey: r.pageUrl)
                     self.failure = Failure(title: r.title,
-                                           message: "Échec du téléchargement : \(error.localizedDescription)\n\nVous pouvez aussi télécharger le morceau depuis le site NCS puis l'ajouter avec Importer des morceaux.",
+                                           message: LF("Échec du téléchargement : %@\n\nVous pouvez aussi télécharger le morceau depuis le site NCS puis l'ajouter avec Importer des morceaux.", error.localizedDescription),
                                            pageUrl: r.pageUrl)
                 }
             }
@@ -179,7 +179,7 @@ final class StoreModel: ObservableObject {
                             if it.status == .readyToPlay {
                                 self.previewLoading = false
                             } else if it.status == .failed {
-                                ToastCenter.shared.show("Écoute impossible : " + (it.error?.localizedDescription ?? "erreur"))
+                                ToastCenter.shared.show(L("Écoute impossible : ") + (it.error?.localizedDescription ?? L("erreur")))
                                 self.stopPreview()
                             }
                         }
@@ -197,7 +197,7 @@ final class StoreModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
-                    ToastCenter.shared.show("Écoute impossible : " + error.localizedDescription)
+                    ToastCenter.shared.show(L("Écoute impossible : ") + error.localizedDescription)
                     if self.previewUrl == page { self.stopPreview() }
                 }
             }
@@ -211,7 +211,7 @@ struct StoreView: View {
 
     private var genreName: String {
         if let g = model.genreId, let f = model.genres.first(where: { $0.id == g }) { return f.name }
-        return "Tous"
+        return L("Tous")
     }
 
     private func lineRow(_ label: String, _ value: String, action: (() -> Void)?) -> some View {
@@ -232,20 +232,20 @@ struct StoreView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     Menu {
-                        Button("Tous") { model.genreId = nil }
+                        Button(L("Tous")) { model.genreId = nil }
                         ForEach(model.genres) { g in
                             Button(g.name) { model.genreId = g.id }
                         }
                     } label: {
-                        lineRow("Genre", genreName, action: nil)
+                        lineRow(L("Genre"), genreName, action: nil)
                     }
                     Button {
                         model.toggleWishMode()
                     } label: {
-                        lineRow(model.wishMode ? "Tout afficher" : "Liste de souhaits", "\(data.wishlist.count)", action: nil)
+                        lineRow(model.wishMode ? L("Tout afficher") : L("Liste de souhaits"), "\(data.wishlist.count)", action: nil)
                     }
                     .buttonStyle(RowPressStyle())
-                    Text("Musique libre d'utilisation de ncs.io. Créditez NCS si vous utilisez un morceau dans vos vidéos.")
+                    Text(L("Musique libre d'utilisation de ncs.io. Créditez NCS si vous utilisez un morceau dans vos vidéos."))
                         .font(.system(size: 12))
                         .foregroundColor(Theme.gray)
                         .padding(.horizontal, 16)
@@ -278,7 +278,7 @@ struct StoreView: View {
             }
             .alert(item: $model.failure) { f in
                 Alert(title: Text(f.title), message: Text(f.message),
-                      primaryButton: .default(Text("Ouvrir ncs.io")) {
+                      primaryButton: .default(Text(L("Ouvrir ncs.io"))) {
                           if let u = URL(string: f.pageUrl.isEmpty ? Ncs.base : f.pageUrl) { UIApplication.shared.open(u) }
                       },
                       secondaryButton: .cancel(Text("OK")))
