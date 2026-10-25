@@ -1,0 +1,48 @@
+name: Build KalisMusic iOS
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Outils (XcodeGen, ldid, dpkg)
+        run: brew install xcodegen ldid dpkg
+
+      - name: Générer le projet Xcode
+        run: xcodegen generate
+
+      - name: Compiler (sans signature, arm64 + arm64e)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project KalisMusic.xcodeproj \
+            -scheme KalisMusic \
+            -sdk iphoneos \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            ARCHS="arm64 arm64e" ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tee build.log | tail -n 60
+
+      - name: Empaqueter (.ipa non signé + .deb jailbreak rootless)
+        run: |
+          # au cas où Git pour Windows aurait converti le script en fins de ligne CRLF
+          sed -i '' $'s/\r$//' scripts/package.sh
+          bash scripts/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KalisMusic-iOS
+          path: out/*
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: build.log
